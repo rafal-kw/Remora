@@ -17,7 +17,8 @@ typedef union
     float setPoint[VARIABLES];		  // Servo thread commands ?? - temperature SP, PWM etc
     uint8_t jointEnable;
     uint16_t outputs;
-    uint8_t spare0;
+    uint8_t checksum;
+    uint8_t dataOK;
   };
 } rxData_t;
 
@@ -37,6 +38,7 @@ typedef union
     int32_t jointFeedback[JOINTS];	  // Base thread feedback ??
     float processVariable[VARIABLES];		     // Servo thread feedback ??
 	uint16_t inputs;
+    uint8_t checksum;
   };
 } txData_t;
 

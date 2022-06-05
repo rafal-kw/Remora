@@ -19,9 +19,10 @@ void createStepgen()
     ptrJointFreqCmd[joint] = &rxData.jointFreqCmd[joint];
     ptrJointFeedback[joint] = &txData.jointFeedback[joint];
     ptrJointEnable = &rxData.jointEnable;
+    ptrDataOK = &rxData.dataOK;
 
     // create the step generator, register it in the thread
-    Module* stepgen = new Stepgen(base_freq, joint, enable, step, dir, STEPBIT, *ptrJointFreqCmd[joint], *ptrJointFeedback[joint], *ptrJointEnable);
+    Module* stepgen = new Stepgen(base_freq, joint, enable, step, dir, STEPBIT, *ptrJointFreqCmd[joint], *ptrJointFeedback[joint], *ptrJointEnable, *ptrDataOK);
     baseThread->registerModule(stepgen);
 }
 
@@ -30,7 +31,7 @@ void createStepgen()
                 METHOD DEFINITIONS
 ************************************************************************/
 
-Stepgen::Stepgen(int32_t threadFreq, int jointNumber, std::string enable, std::string step, std::string direction, int stepBit, volatile int32_t &ptrFrequencyCommand, volatile int32_t &ptrFeedback, volatile uint8_t &ptrJointEnable) :
+Stepgen::Stepgen(int32_t threadFreq, int jointNumber, std::string enable, std::string step, std::string direction, int stepBit, volatile int32_t &ptrFrequencyCommand, volatile int32_t &ptrFeedback, volatile uint8_t &ptrJointEnable, volatile uint8_t &ptrDataOK) :
 	jointNumber(jointNumber),
 	enable(enable),
 	step(step),
@@ -38,7 +39,8 @@ Stepgen::Stepgen(int32_t threadFreq, int jointNumber, std::string enable, std::s
 	stepBit(stepBit),
 	ptrFrequencyCommand(&ptrFrequencyCommand),
 	ptrFeedback(&ptrFeedback),
-	ptrJointEnable(&ptrJointEnable)
+	ptrJointEnable(&ptrJointEnable),
+    ptrDataOK(&ptrDataOK)
 {
 	this->enablePin = new Pin(this->enable, OUTPUT);			// create Pins
 	this->stepPin = new Pin(this->step, OUTPUT);
@@ -65,13 +67,24 @@ void Stepgen::slowUpdate()
 void Stepgen::makePulses()
 {
 	int32_t stepNow = 0;
+    static uint32_t count = 0;
+    static uint8_t dds_error_sent = 0;
+    static int32_t dds_prev = 0, feedback_prev = 0;
+    static uint32_t error_count = 0, okay_count = 0;
 
-	this->isEnabled = ((*(this->ptrJointEnable) & this->mask) != 0);
+    if(((*(this->ptrJointEnable) & this->mask) != 0) && jointNumber == 0 && *(this->ptrDataOK) == 0)
+    {
+        error_count++;
+        //printf("e\t%d", error_count);
+    }else{
+        okay_count++;
+    }
+
+	this->isEnabled = (((*(this->ptrJointEnable) & this->mask) != 0) && *(this->ptrDataOK) != 0);
 
 	if (this->isEnabled == true)  												// this Step generator is enables so make the pulses
 	{
 		this->enablePin->set(false);                                			// Enable the driver - CHANGE THIS TO MAKE THE OUTPUT VALUE CONFIGURABLE???
-
 		this->frequencyCommand = *(this->ptrFrequencyCommand);            		// Get the latest frequency command via pointer to the data source
 		this->DDSaddValue = this->frequencyCommand * this->frequencyScale;		// Scale the frequency command to get the DDS add value
 		stepNow = this->DDSaccumulator;                           				// Save the current DDS accumulator value

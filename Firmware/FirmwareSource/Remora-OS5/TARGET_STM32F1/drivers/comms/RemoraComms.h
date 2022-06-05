@@ -23,6 +23,7 @@ class RemoraComms
         volatile rxData_t*  ptrRxData;
         volatile txData_t*  ptrTxData;
         rxData_t            spiRxBuffer;
+        txData_t            spiTxBuffer;
         uint8_t             rejectCnt;
         bool                SPIdata;
         bool                SPIdataError;

@@ -109,6 +109,7 @@ volatile bool*    ptrPRUreset;
 volatile int32_t* ptrJointFreqCmd[JOINTS];
 volatile int32_t* ptrJointFeedback[JOINTS];
 volatile uint8_t* ptrJointEnable;
+volatile uint8_t* ptrDataOK;
 volatile float*   ptrSetPoint[VARIABLES];
 volatile float*   ptrProcessVariable[VARIABLES];
 volatile uint16_t* ptrInputs;
@@ -138,7 +139,7 @@ volatile uint16_t* ptrOutputs;
 
 #elif defined TARGET_SKR_MINI_E3
     SDBlockDevice blockDevice(PA_7, PA_6, PA_5, PA_4);  // mosi, miso, sclk, cs
-    RemoraComms comms(ptrRxData, ptrTxData, SPI1, PC_1);    // use PC_1 as "slave select"
+    RemoraComms comms(ptrRxData, ptrTxData, SPI1, PA_15);    // use PC_1 as "slave select"
 
 #elif defined TARGET_SPIDER
     SDBlockDevice blockDevice(PA_7, PA_6, PA_5, PA_4);  // mosi, miso, sclk, cs

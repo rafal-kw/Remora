@@ -104,7 +104,7 @@ typedef union
     float 	setPoint[VARIABLES];
 	uint8_t jointEnable;
 	uint16_t outputs;
-    uint8_t spare0;
+    uint8_t checksum;
   };
 } txData_t;
 
@@ -123,6 +123,7 @@ typedef union
     int32_t jointFeedback[JOINTS];
     float 	processVariable[VARIABLES];
     uint16_t inputs;
+    uint8_t checksum;
   };
 } rxData_t;
 
@@ -251,6 +252,9 @@ int rtapi_app_main(void)
       return -1;
     }
 
+
+
+	bcm2835_gpio_set_pad(BCM2835_PAD_GROUP_GPIO_0_27, BCM2835_PAD_DRIVE_16mA);
 	// Set the SPI0 pins to the Alt 0 function to enable SPI0 access, setup CS register
 	// and clear TX and RX fifos
 	if (!bcm2835_spi_begin())
@@ -858,6 +862,7 @@ void spi_read()
 {
 	int i;
 	double curr_pos;
+	uint8_t checksum = 0;
 
 	// Data header
 	txData.header = PRU_READ;
@@ -879,11 +884,27 @@ void spi_read()
 			// reset rising edge detected, try SPI transfer and reset OR PRU running
 			
 			// Transfer to and from the PRU
-			spi_transfer();
+			//spi_transfer();
 
 			switch (rxData.header)		// only process valid SPI payloads. This rejects bad payloads
 			{
 				case PRU_DATA:
+					//checksum
+					
+
+					
+					for (i = 0; i < SPIBUFSIZE; i++)
+					{
+						checksum += rxData.rxBuffer[i];
+					}
+
+					if(((rxData.checksum << 1) & 0xFF) != checksum)
+					{
+						*(data->SPIstatus) = 0;
+						return;
+					}
+
+
 					// we have received a GOOD payload from the PRU
 					*(data->SPIstatus) = 1;
 
@@ -951,6 +972,14 @@ void spi_write()
 {
 	int i;
 
+	// Clear buffer
+
+	for (i = 0; i < SPIBUFSIZE; i++)
+	{
+		txData.txBuffer[i] = 0;
+	}
+
+
 	// Data header
 	txData.header = PRU_WRITE;
 
@@ -991,11 +1020,20 @@ void spi_write()
 		}
 	}
 
+	uint8_t checksum = 0;
+	for (i = 0; i < SPIBUFSIZE; i++)
+	{
+		checksum += txData.txBuffer[i];
+	}
+	txData.checksum = checksum;
+	//fprintf(stderr, "%d\n", checksum) ;
+
 	if( *(data->SPIstatus) )
 	{
 		// Transfer to and from the PRU
-		spi_transfer();
+		//spi_transfer();
 	}
+	spi_transfer();
 
 }
 

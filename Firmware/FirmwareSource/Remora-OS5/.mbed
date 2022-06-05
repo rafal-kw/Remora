@@ -2,5 +2,5 @@ ROOT=.
 <<<<<<< Updated upstream=undefined
 =
 >>>>>>> Stashed changes=undefined
-TARGET=MONSTER8
-TARGET_CODE=custom-406
+TARGET=SKR_MINI_E3
+TARGET_CODE=custom-455

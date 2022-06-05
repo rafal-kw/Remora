@@ -139,11 +139,14 @@ void RemoraComms::init()
 void RemoraComms::start()
 {
     this->ptrTxData->header = PRU_DATA;
-    HAL_SPI_TransmitReceive_DMA(&this->spiHandle, (uint8_t *)this->ptrTxData->txBuffer, (uint8_t *)this->spiRxBuffer.rxBuffer, SPI_BUFF_SIZE);
+    HAL_SPI_TransmitReceive_DMA(&this->spiHandle, (uint8_t *)this->spiTxBuffer.txBuffer, (uint8_t *)this->spiRxBuffer.rxBuffer, SPI_BUFF_SIZE);
 }
 
 void RemoraComms::processPacket()
 {
+    
+    uint8_t checksum = 0, result;
+    __disable_irq();
     switch (this->spiRxBuffer.header)
     {
       case PRU_READ:
@@ -163,10 +166,22 @@ void RemoraComms::processPacket()
         //if (this->status != HAL_OK) printf("F\n");
 
         // Do it the slower way. This does not seem to impact performance but not great to stay in ISR context for longer.. :-(
+        
         for (int i = 0; i < SPI_BUFF_SIZE; i++)
         {
             this->ptrRxData->rxBuffer[i] = this->spiRxBuffer.rxBuffer[i];
+            checksum += this->ptrRxData->rxBuffer[i];
+            
         }
+        if(((this->ptrRxData->checksum << 1) & 0xFF) != checksum)
+        {
+            //printf("%d\n", checksum);
+            this->SPIdata = false;
+            this->ptrRxData->dataOK = 0x00;
+        }else{
+            this->ptrRxData->dataOK = 0x01;
+        }
+        
 
         break;
 
@@ -178,8 +193,17 @@ void RemoraComms::processPacket()
         }
         // reset SPI somehow
     }
+    
+    checksum = 0;
+    for (int i = 0; i < SPI_BUFF_SIZE; i++)
+    {
+        checksum += this->ptrTxData->txBuffer[i];
+        this->spiTxBuffer.txBuffer[i] = this->ptrTxData->txBuffer[i];
+    }
+    this->spiTxBuffer.checksum = checksum;
 
-    HAL_SPI_TransmitReceive_DMA(&this->spiHandle, (uint8_t *)this->ptrTxData->txBuffer, (uint8_t *)this->spiRxBuffer.rxBuffer, SPI_BUFF_SIZE);
+    HAL_SPI_TransmitReceive_DMA(&this->spiHandle, (uint8_t *)this->spiTxBuffer.txBuffer, (uint8_t *)this->spiRxBuffer.rxBuffer, SPI_BUFF_SIZE);
+    __enable_irq();
 }
 
 

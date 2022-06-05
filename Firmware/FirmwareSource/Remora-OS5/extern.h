@@ -31,6 +31,7 @@ extern volatile bool*      ptrPRUreset;
 extern volatile int32_t*   ptrJointFreqCmd[JOINTS];
 extern volatile int32_t*   ptrJointFeedback[JOINTS];
 extern volatile uint8_t*   ptrJointEnable;
+extern volatile uint8_t*   ptrDataOK;
 extern volatile float*     ptrSetPoint[VARIABLES];
 extern volatile float*     ptrProcessVariable[VARIABLES];
 extern volatile uint16_t*   ptrInputs;

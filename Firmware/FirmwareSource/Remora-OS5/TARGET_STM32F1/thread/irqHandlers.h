@@ -7,7 +7,9 @@ void TIM1_IRQHandler()
   {
     TIM1->SR &= ~TIM_SR_UIF; // clear UIF flag
     
+    __disable_irq();
     Interrupt::TIM1_Wrapper();
+  __enable_irq();
   }
 }
 
@@ -17,7 +19,9 @@ void TIM2_IRQHandler()
   {
     TIM2->SR &= ~TIM_SR_UIF; // clear UIF flag
     
+    __disable_irq();
     Interrupt::TIM2_Wrapper();
+  __enable_irq();
   }
 }
 
@@ -27,6 +31,8 @@ void TIM3_IRQHandler()
   {
     TIM3->SR &= ~TIM_SR_UIF; // clear UIF flag
     
+    __disable_irq();
     Interrupt::TIM3_Wrapper();
+  __enable_irq();
   }
 }

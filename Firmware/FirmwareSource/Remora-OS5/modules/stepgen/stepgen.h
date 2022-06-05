@@ -29,6 +29,7 @@ class Stepgen : public Module
     int32_t rawCount;             	// current position raw count - not currently used - mirrors original stepgen.c
     volatile int32_t *ptrFeedback;       	// pointer where to put the feedback
     volatile uint8_t *ptrJointEnable;
+    volatile uint8_t *ptrDataOK;
     int32_t DDSaccumulator;       	// Direct Digital Synthesis (DDS) accumulator
     float   frequencyScale;		  	  // frequency scale
   	int32_t	DDSaddValue;		  	    // DDS accumulator add vdd value
@@ -36,7 +37,7 @@ class Stepgen : public Module
 
   public:
 
-    Stepgen(int32_t, int, std::string, std::string, std::string, int, volatile int32_t&, volatile int32_t&, volatile uint8_t&);  // constructor
+    Stepgen(int32_t, int, std::string, std::string, std::string, int, volatile int32_t&, volatile int32_t&, volatile uint8_t&, volatile uint8_t&);  // constructor
 
     Pin *enablePin, *stepPin, *directionPin;		// class object members - Pin objects
 
